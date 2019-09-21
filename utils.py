@@ -6,10 +6,18 @@ from torch import nn
 import torch
 import numpy as np
 
-
+'''
 def v_wrap(np_array, dtype=np.float32):
     if np_array.dtype != dtype:
         np_array = np_array.astype(dtype)
+    return torch.from_numpy(np_array)
+'''
+
+def v_wrap(np_array, batch, input_size, seq_len, dtype=np.float32):
+    if np_array.dtype != dtype:
+        np_array = np_array.astype(dtype)
+        np_array = np_array.reshape([batch, input_size, seq_len])
+        # np_array = torch.from_numpy()
     return torch.from_numpy(np_array)
 
 

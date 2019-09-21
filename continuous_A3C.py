@@ -33,7 +33,7 @@ N_A = env.action_space.shape[0]
 input_size = env.observation_space.shape[0]
 output_size = env.action_space.shape[0]
 
-num_channels = [1]
+num_channels = [5, 10]
 kernel_size = 2
 dropout = 0
 
@@ -91,17 +91,13 @@ class TCN(nn.Module):
         a_dim = output_size
 
         self.tcn = TemporalConvNet(input_size, num_channels, kernel_size=kernel_size, dropout=dropout)
-        # self.linear = nn.Linear(num_channels[-1], output_size)        
-        # self.critic_linear = nn.Linear(num_channels[-1], 1)
-        # self.actor_linear = nn.Linear(num_channels[-1] * 10, output_size)
-
         self.s_dim = s_dim
         self.a_dim = a_dim
         # self.a1 = nn.Linear(s_dim, 200)
         self.mu = nn.Linear(num_channels[-1], a_dim)
         self.sigma = nn.Linear(num_channels[-1], a_dim)
 
-        self.c1 = nn.Linear(s_dim, 100)
+        self.c1 = nn.Linear(num_channels[-1], 100)
         self.v = nn.Linear(100, 1)
 
         self.distribution = torch.distributions.Normal
@@ -115,21 +111,21 @@ class TCN(nn.Module):
         self.v.weight.data.normal_(0, 0.01)
 
     def forward(self, x):
-        '''
-        a1 = F.relu6(self.a1(x))
-        mu = 2 * F.tanh(self.mu(a1))
-        sigma = F.softplus(self.sigma(a1)) + 0.001      # avoid 0
-        c1 = F.relu6(self.c1(x))
-        values = self.v(c1)
-        return mu, sigma, values
-        '''
+        
+        # a1 = F.relu6(self.a1(x))
+        # mu = 2 * F.tanh(self.mu(a1))
+        # sigma = F.softplus(self.sigma(a1)) + 0.001      # avoid 0
+        # c1 = F.relu6(self.c1(x))
+        # values = self.v(c1)
+        # return mu, sigma, values
+        
 
         a1 = F.relu6(self.tcn(x))
         # print(a1.size())
         mu = 2 * torch.tanh(self.mu(a1.transpose(1, 2)))
         sigma = F.softplus(self.sigma(a1.transpose(1, 2))) + 0.001      # avoid 0
         
-        c1 = F.relu6(self.c1(x.transpose(1, 2)))
+        c1 = F.relu6(self.c1(a1.transpose(1, 2)))
         values = self.v(c1)
 
         return mu, sigma, values
@@ -206,12 +202,16 @@ if __name__ == "__main__":
     global_ep, global_ep_r, res_queue = mp.Value('i', 0), mp.Value('d', 0.), mp.Queue()
 
     # parallel training
-    workers = [Worker(gnet, opt, global_ep, global_ep_r, res_queue, i) for i in range(mp.cpu_count())]
+    # workers = [Worker(gnet, opt, global_ep, global_ep_r, res_queue, i) for i in range(mp.cpu_count())]
     # workers = [Worker(gnet, opt, global_ep, global_ep_r, res_queue, i = 0)]
     # w = Worker(gnet, opt, global_ep, global_ep_r, res_queue, 0)
     # w.start()
     # print(1000)
+    workers = [Worker(gnet, opt, global_ep, global_ep_r, res_queue, i) for i in range(mp.cpu_count())]
     [w.start() for w in workers]
+
+    # w = Worker(gnet, opt, global_ep, global_ep_r, res_queue, 0)
+    # w.start()
     res = []                    # record episode reward to plot
     while True:
         r = res_queue.get()
@@ -220,6 +220,7 @@ if __name__ == "__main__":
         else:
             break
     [w.join() for w in workers]
+   
 
     import matplotlib.pyplot as plt
     plt.plot(res)
