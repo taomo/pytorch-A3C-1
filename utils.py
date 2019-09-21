@@ -12,14 +12,18 @@ def v_wrap(np_array, dtype=np.float32):
         np_array = np_array.astype(dtype)
     return torch.from_numpy(np_array)
 '''
-
+'''
 def v_wrap(np_array, batch, input_size, seq_len, dtype=np.float32):
     if np_array.dtype != dtype:
         np_array = np_array.astype(dtype)
         np_array = np_array.reshape([batch, input_size, seq_len])
         # np_array = torch.from_numpy()
     return torch.from_numpy(np_array)
-
+'''
+def v_wrap(np_array, dtype=np.float32):
+    if np_array.dtype != dtype:
+        np_array = np_array.astype(dtype)
+    return torch.from_numpy(np_array)
 
 def set_init(layers):
     for layer in layers:
@@ -31,8 +35,8 @@ def push_and_pull(opt, lnet, gnet, done, s_, bs, ba, br, gamma):
     if done:
         v_s_ = 0.               # terminal
     else:
-        v_s_ = lnet.forward(v_wrap(s_[None, :]))[-1].data.numpy()[0, 0]
-
+        # v_s_ = lnet.forward(v_wrap(s_[None, :]))[-1].data.numpy()[0, 0]
+        v_s_ = lnet.forward(v_wrap(s_))
     buffer_v_target = []
     for r in br[::-1]:    # reverse buffer r
         v_s_ = r + gamma * v_s_
