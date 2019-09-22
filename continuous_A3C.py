@@ -134,8 +134,9 @@ class TCN(nn.Module):
     def choose_action(self, s):
         self.training = False
         mu, sigma, _ = self.forward(s)
-        m = self.distribution(mu.view(1, ).data, sigma.view(1, ).data)
        
+        m = self.distribution(mu.view(1, ).data, sigma.view(1, ).data)
+               
         return m.sample().cpu().detach().numpy()
         #### return m.sample().numpy()
 
