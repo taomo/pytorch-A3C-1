@@ -135,7 +135,7 @@ class TCN(nn.Module):
         self.training = False
         mu, sigma, _ = self.forward(s)
         m = self.distribution(mu.view(1, ).data, sigma.view(1, ).data)
-        # return m.sample().numpy()
+        #### return m.sample().numpy()
         return m.sample().cpu().detach().numpy()
 
     def loss_func(self, s, a, v_t):
